@@ -3,7 +3,8 @@ const fs = require('fs');
 const path = require('path');
 const req = require('request-promise-native');
 
-const MODEL = 'CS_AML-production';
+const API = 'https://model.wingbot.ai';
+const MODEL = '';
 
 function intentNameFilter (intentName) {
     const match = `${intentName}`.match(/^q-(.+)-[a-zA-Z0-9]{4,7}$/);
@@ -31,7 +32,7 @@ async function fn () {
         const start = Date.now();
 
         const res = await req({
-            url: `https://model.wingbot.ai/${MODEL}`,
+            url: `${API}/${MODEL}`,
             json: true,
             qs: { text }
         })
@@ -44,11 +45,13 @@ async function fn () {
         sum += stop;
 
         const { tags = [] } = res;
-        const { intent = '-', score = 0 } = tags[0] || {};
+        const { intent = '-', score = 0, entities = [] } = tags[0] || {};
+
+        const [{ entity, value } = { entity: '', value: '' }] = entities;
 
         process.stdout.write(".");
 
-        out.push(`${text}\t${intentNameFilter(intent)}\t${score}`);
+        out.push(`${text}\t${intentNameFilter(intent)}\t${(score + '').replace('.', ',')}\t${entity}\t${value}`);
         out2.push(`${text} (${intent}, ${score})\tpromluva\n\t\t\t"${text}"\t"-"\t"nothing"`);
     }
 
